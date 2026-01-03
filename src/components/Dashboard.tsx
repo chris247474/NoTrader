@@ -116,44 +116,46 @@ export function Dashboard() {
     <div className="min-h-screen bg-slate-900 text-slate-50">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-slate-50">
-              Macro Trend Dashboard
-            </h1>
-            <p className="text-sm text-slate-400">
-              Bitcoin cycle analysis using MoneyLine methodology
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Live indicator */}
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  isLive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
-                }`}
-              />
-              <span className="text-sm text-slate-400">
-                {isLive ? 'Live' : 'Sample Data'}
-              </span>
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-bold text-slate-50">
+                Trend Analysis
+              </h1>
+              <p className="text-sm text-slate-400">
+                Bitcoin cycle analysis using MoneyLine methodology
+              </p>
             </div>
 
-            {/* Last updated */}
-            {lastUpdated && (
-              <span className="text-sm text-slate-500">
-                Updated: {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+              {/* Live indicator */}
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    isLive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                  }`}
+                />
+                <span className="text-sm text-slate-400">
+                  {isLive ? 'Live' : 'Sample Data'}
+                </span>
+              </div>
 
-            {/* Refresh button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="px-3 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 rounded-lg transition-colors"
-            >
-              {isLoading ? 'Loading...' : 'Refresh'}
-            </button>
+              {/* Last updated */}
+              {lastUpdated && (
+                <span className="text-sm text-slate-500 hidden sm:inline">
+                  Updated: {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
+
+              {/* Refresh button */}
+              <button
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="px-3 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 rounded-lg transition-colors"
+              >
+                {isLoading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
           </div>
         </div>
       </header>
