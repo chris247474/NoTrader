@@ -33,22 +33,22 @@ function filterDataByTimeRange<T extends { date: string }>(data: T[], range: Tim
 
   switch (range) {
     case '10Y':
-      cutoffDate = new Date(latestDate.getFullYear() - 10, latestDate.getMonth(), 1);
+      cutoffDate = new Date(latestDate.getFullYear() - 10, latestDate.getMonth(), latestDate.getDate());
       break;
     case '5Y':
-      cutoffDate = new Date(latestDate.getFullYear() - 5, latestDate.getMonth(), 1);
+      cutoffDate = new Date(latestDate.getFullYear() - 5, latestDate.getMonth(), latestDate.getDate());
       break;
     case '3Y':
-      cutoffDate = new Date(latestDate.getFullYear() - 3, latestDate.getMonth(), 1);
+      cutoffDate = new Date(latestDate.getFullYear() - 3, latestDate.getMonth(), latestDate.getDate());
       break;
     case '2Y':
-      cutoffDate = new Date(latestDate.getFullYear() - 2, latestDate.getMonth(), 1);
+      cutoffDate = new Date(latestDate.getFullYear() - 2, latestDate.getMonth(), latestDate.getDate());
       break;
     case '1Y':
-      cutoffDate = new Date(latestDate.getFullYear() - 1, latestDate.getMonth(), 1);
+      cutoffDate = new Date(latestDate.getFullYear() - 1, latestDate.getMonth(), latestDate.getDate());
       break;
     case '6M':
-      cutoffDate = new Date(latestDate.getFullYear(), latestDate.getMonth() - 6, 1);
+      cutoffDate = new Date(latestDate.getFullYear(), latestDate.getMonth() - 6, latestDate.getDate());
       break;
     default:
       return data;
