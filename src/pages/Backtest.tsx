@@ -727,18 +727,18 @@ export default function BacktestDashboardV4() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-black bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
             Indicator Backtest v4
           </h1>
-          <p className="text-slate-400 mt-1">20-Week SMA (Trend) + 200-Week MA (Floor) + On-Chain Signals</p>
+          <p className="text-slate-400 text-sm sm:text-base mt-1">20-Week SMA (Trend) + 200-Week MA (Floor) + On-Chain Signals</p>
         </div>
 
         {/* Current State - Big Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* 20W MA Trend Status */}
-          <div className={`rounded-xl p-5 border-2 ${currentMa20w?.trend === 'BULL' ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-red-500/10 border-red-500/50'}`}>
-            <h3 className="text-slate-400 text-sm font-medium mb-2">20-WEEK MA TREND</h3>
-            <div className={`text-3xl font-black ${currentMa20w?.trend === 'BULL' ? 'text-emerald-400' : 'text-red-400'}`}>
+          <div className={`rounded-xl p-4 sm:p-5 border-2 ${currentMa20w?.trend === 'BULL' ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-red-500/10 border-red-500/50'}`}>
+            <h3 className="text-slate-400 text-xs sm:text-sm font-medium mb-2">20-WEEK MA TREND</h3>
+            <div className={`text-2xl sm:text-3xl font-black ${currentMa20w?.trend === 'BULL' ? 'text-emerald-400' : 'text-red-400'}`}>
               {currentMa20w?.trend === 'BULL' ? '🟢 BULLISH' : '🔴 BEARISH'}
             </div>
             <div className="mt-3 space-y-1 text-sm">
@@ -751,9 +751,9 @@ export default function BacktestDashboardV4() {
           </div>
           
           {/* 200W MA Floor Status */}
-          <div className="bg-slate-800/40 rounded-xl p-5 border border-orange-500/30">
-            <h3 className="text-slate-400 text-sm font-medium mb-2">200-WEEK MA FLOOR</h3>
-            <div className="text-3xl font-black text-orange-400">
+          <div className="bg-slate-800/40 rounded-xl p-4 sm:p-5 border border-orange-500/30">
+            <h3 className="text-slate-400 text-xs sm:text-sm font-medium mb-2">200-WEEK MA FLOOR</h3>
+            <div className="text-2xl sm:text-3xl font-black text-orange-400">
               ${current.ma200w?.toLocaleString()}
             </div>
             <div className="mt-3 space-y-1 text-sm">
@@ -766,9 +766,9 @@ export default function BacktestDashboardV4() {
           </div>
           
           {/* Composite Signal */}
-          <div className="bg-slate-800/40 rounded-xl p-5 border border-amber-500/30">
-            <h3 className="text-slate-400 text-sm font-medium mb-2">COMPOSITE SIGNAL</h3>
-            <div className={`text-2xl font-black ${
+          <div className="bg-slate-800/40 rounded-xl p-4 sm:p-5 border border-amber-500/30">
+            <h3 className="text-slate-400 text-xs sm:text-sm font-medium mb-2">COMPOSITE SIGNAL</h3>
+            <div className={`text-xl sm:text-2xl font-black ${
               currentComposite?.signal.includes('BUY') ? 'text-emerald-400' : 
               currentComposite?.signal.includes('BEAR') || currentComposite?.signal.includes('TOP') ? 'text-red-400' : 
               'text-amber-400'
@@ -1028,7 +1028,7 @@ export default function BacktestDashboardV4() {
             </div>
           </div>
 
-          <div className="h-[500px]">
+          <div className="h-[350px] sm:h-[450px] md:h-[500px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />

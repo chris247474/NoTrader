@@ -133,12 +133,12 @@ function CategoryTabs({ active, onChange }: CategoryTabsProps) {
   ];
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 overflow-x-auto pb-2 -mb-2">
       {tabs.map((tab) => (
         <button
           key={tab.value}
           onClick={() => onChange(tab.value)}
-          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-sm sm:text-base ${
             active === tab.value
               ? 'bg-amber-500 text-slate-900'
               : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -308,51 +308,53 @@ export default function Assets() {
 
             {/* Table */}
             <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left py-3 px-4 text-slate-400 text-sm font-medium">#</th>
-                    <th className="text-left py-3 px-4 text-slate-400 text-sm font-medium">
-                      {category === 'crypto' ? 'Token' : category === 'stocks' ? 'Stock' : 'Commodity'}
-                    </th>
-                    <th className="text-center py-3 px-4 text-slate-400 text-sm font-medium">Trend</th>
-                    <th className="text-center py-3 px-4 text-slate-400 text-sm font-medium">Time Since Flipped</th>
-                    <th className="text-right py-3 px-4 text-slate-400 text-sm font-medium">Price</th>
-                    {category === 'crypto' && (
-                      <th className="text-right py-3 px-4 text-slate-400 text-sm font-medium">Market Cap</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAssets.map((asset, index) => (
-                    <tr
-                      key={asset.id}
-                      className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${
-                        index % 2 === 0 ? 'bg-slate-800/20' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-4 text-slate-500">{asset.rank}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{asset.icon}</span>
-                          <div>
-                            <div className="font-medium text-white">{asset.name}</div>
-                            <div className="text-slate-500 text-sm">{asset.symbol}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <TrendBadge trend={asset.trend} />
-                      </td>
-                      <td className="py-3 px-4 text-center text-slate-300">{asset.timeSinceFlipped}</td>
-                      <td className="py-3 px-4 text-right font-mono text-white">{formatPrice(asset.price)}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      <th className="text-left py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">#</th>
+                      <th className="text-left py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">
+                        {category === 'crypto' ? 'Token' : category === 'stocks' ? 'Stock' : 'Commodity'}
+                      </th>
+                      <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Trend</th>
+                      <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden sm:table-cell">Time Flipped</th>
+                      <th className="text-right py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Price</th>
                       {category === 'crypto' && (
-                        <td className="py-3 px-4 text-right text-slate-300">{formatMarketCap(asset.marketCap)}</td>
+                        <th className="text-right py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden md:table-cell">Market Cap</th>
                       )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredAssets.map((asset, index) => (
+                      <tr
+                        key={asset.id}
+                        className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${
+                          index % 2 === 0 ? 'bg-slate-800/20' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-3 sm:px-4 text-slate-500 text-sm">{asset.rank}</td>
+                        <td className="py-3 px-3 sm:px-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <span className="text-xl sm:text-2xl">{asset.icon}</span>
+                            <div>
+                              <div className="font-medium text-white text-sm sm:text-base">{asset.name}</div>
+                              <div className="text-slate-500 text-xs sm:text-sm">{asset.symbol}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 sm:px-4 text-center">
+                          <TrendBadge trend={asset.trend} />
+                        </td>
+                        <td className="py-3 px-3 sm:px-4 text-center text-slate-300 text-sm hidden sm:table-cell">{asset.timeSinceFlipped}</td>
+                        <td className="py-3 px-3 sm:px-4 text-right font-mono text-white text-sm">{formatPrice(asset.price)}</td>
+                        {category === 'crypto' && (
+                          <td className="py-3 px-3 sm:px-4 text-right text-slate-300 text-sm hidden md:table-cell">{formatMarketCap(asset.marketCap)}</td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               {filteredAssets.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
