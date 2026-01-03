@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Area, ReferenceLine, Legend } from 'recharts';
 
 // =============================================================================
@@ -579,7 +579,56 @@ function calculate20WMAAccuracy(results: MA20WResult[], events: HistoricalDataPo
 // DASHBOARD COMPONENT
 // =============================================================================
 
+// Time range options for chart
+type TimeRange = 'ALL' | '10Y' | '5Y' | '3Y' | '2Y' | '1Y' | '6M';
+
+const timeRangeOptions: { value: TimeRange; label: string }[] = [
+  { value: 'ALL', label: 'All Time' },
+  { value: '10Y', label: '10 Years' },
+  { value: '5Y', label: '5 Years' },
+  { value: '3Y', label: '3 Years' },
+  { value: '2Y', label: '2 Years' },
+  { value: '1Y', label: '1 Year' },
+  { value: '6M', label: '6 Months' },
+];
+
+function filterDataByTimeRange(data: HistoricalDataPoint[], range: TimeRange): HistoricalDataPoint[] {
+  if (range === 'ALL') return data;
+
+  const now = new Date('2026-01-01'); // Current date in the data
+  let cutoffDate: Date;
+
+  switch (range) {
+    case '10Y':
+      cutoffDate = new Date(now.getFullYear() - 10, now.getMonth(), 1);
+      break;
+    case '5Y':
+      cutoffDate = new Date(now.getFullYear() - 5, now.getMonth(), 1);
+      break;
+    case '3Y':
+      cutoffDate = new Date(now.getFullYear() - 3, now.getMonth(), 1);
+      break;
+    case '2Y':
+      cutoffDate = new Date(now.getFullYear() - 2, now.getMonth(), 1);
+      break;
+    case '1Y':
+      cutoffDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+      break;
+    case '6M':
+      cutoffDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+      break;
+    default:
+      return data;
+  }
+
+  const cutoffStr = cutoffDate.toISOString().slice(0, 7); // YYYY-MM format
+  return data.filter(d => d.date >= cutoffStr);
+}
+
 export default function BacktestDashboardV4() {
+  // Time range state for chart
+  const [chartTimeRange, setChartTimeRange] = useState<TimeRange>('ALL');
+
   // Run all evaluations
   const ma20wResults = useMemo(() => evaluate20WMA(historicalData), []);
   const ma200wResults = useMemo(() => evaluate200WMA(historicalData), []);
@@ -622,6 +671,34 @@ export default function BacktestDashboardV4() {
   const currentMa20w = ma20wResults[ma20wResults.length - 1];
   const currentMa200w = ma200wResults[ma200wResults.length - 1];
   const currentComposite = compositeResults[compositeResults.length - 1];
+
+  // Filtered chart data based on time range
+  const chartData = useMemo(() => {
+    const filtered = filterDataByTimeRange(historicalData, chartTimeRange);
+    return filtered;
+  }, [chartTimeRange]);
+
+  // Filter cycle events for the selected time range
+  const filteredCycleTops = useMemo(() =>
+    cycleTops.filter(d => chartData.some(cd => cd.date === d.date)),
+    [chartData]
+  );
+  const filteredCycleBottoms = useMemo(() =>
+    cycleBottoms.filter(d => chartData.some(cd => cd.date === d.date)),
+    [chartData]
+  );
+
+  // Calculate dynamic Y-axis domain based on filtered data
+  const yAxisDomain = useMemo(() => {
+    if (chartData.length === 0) return [0.1, 200000];
+    const prices = chartData.map(d => d.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    // Add some padding and round to nice numbers
+    const min = Math.pow(10, Math.floor(Math.log10(minPrice * 0.8)));
+    const max = Math.pow(10, Math.ceil(Math.log10(maxPrice * 1.2)));
+    return [min, max];
+  }, [chartData]);
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: HistoricalDataPoint }> }) => {
     if (active && payload && payload.length) {
@@ -930,69 +1007,103 @@ export default function BacktestDashboardV4() {
 
         {/* Price Chart with Both MAs */}
         <div className="bg-slate-800/40 rounded-xl p-5 border border-slate-700/50 mb-6">
-          <h2 className="text-lg font-bold text-white mb-4">Price Chart: 20W MA (Trend) + 200W MA (Floor)</h2>
-          <div className="h-96">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <h2 className="text-lg font-bold text-white">Bitcoin Price History: 20W MA (Trend) + 200W MA (Floor)</h2>
+
+            {/* Time Range Selector */}
+            <div className="flex flex-wrap gap-1">
+              {timeRangeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setChartTimeRange(option.value)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                    chartTimeRange === option.value
+                      ? 'bg-amber-500 text-slate-900'
+                      : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-[500px]">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={historicalData.filter(d => d.ma20w)}>
+              <ComposedChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 10 }} interval={4} />
-                <YAxis 
-                  scale="log" 
-                  domain={[100, 200000]} 
-                  stroke="#fbbf24" 
-                  tick={{ fontSize: 10 }} 
-                  tickFormatter={v => v >= 1000 ? `$${(v/1000).toFixed(0)}k` : `$${v}`}
+                <XAxis
+                  dataKey="date"
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 10 }}
+                  interval={chartTimeRange === 'ALL' ? 8 : chartTimeRange === '10Y' ? 6 : chartTimeRange === '6M' ? 0 : 2}
+                />
+                <YAxis
+                  scale="log"
+                  domain={yAxisDomain as [number, number]}
+                  stroke="#fbbf24"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v: number) => v >= 1000 ? `$${(v/1000).toFixed(0)}k` : `$${v}`}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                
+
                 {/* Cycle events */}
-                {cycleTops.map((d, i) => (
+                {filteredCycleTops.map((d, i) => (
                   <ReferenceLine key={`top-${i}`} x={d.date} stroke="#ef4444" strokeDasharray="5 5" strokeWidth={1} />
                 ))}
-                {cycleBottoms.map((d, i) => (
+                {filteredCycleBottoms.map((d, i) => (
                   <ReferenceLine key={`bottom-${i}`} x={d.date} stroke="#22c55e" strokeDasharray="5 5" strokeWidth={1} />
                 ))}
-                
+
                 {/* Price */}
-                <Area 
-                  type="monotone" 
-                  dataKey="price" 
-                  fill="#fbbf2420" 
-                  stroke="#fbbf24" 
+                <Area
+                  type="monotone"
+                  dataKey="price"
+                  fill="#fbbf2420"
+                  stroke="#fbbf24"
                   strokeWidth={2}
                   name="BTC Price"
+                  connectNulls
                 />
-                
+
                 {/* 20W MA - Trend Line */}
-                <Line 
-                  type="monotone" 
-                  dataKey="ma20w" 
-                  stroke="#facc15" 
+                <Line
+                  type="monotone"
+                  dataKey="ma20w"
+                  stroke="#facc15"
                   strokeWidth={2}
                   dot={false}
                   name="20W SMA (Trend)"
+                  connectNulls
                 />
-                
+
                 {/* 200W MA - Floor */}
-                <Line 
-                  type="monotone" 
-                  dataKey="ma200w" 
-                  stroke="#f97316" 
+                <Line
+                  type="monotone"
+                  dataKey="ma200w"
+                  stroke="#f97316"
                   strokeWidth={3}
                   dot={false}
                   name="200W MA (Floor)"
                   strokeDasharray="5 5"
+                  connectNulls
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex flex-wrap gap-4 mt-3 text-xs">
-            <span className="flex items-center gap-1"><span className="w-3 h-1 bg-amber-400 rounded"></span> BTC Price</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-1 bg-yellow-400 rounded"></span> 20W SMA (Trend)</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-1 bg-orange-500 rounded"></span> 200W MA (Floor)</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-red-500"></span> Cycle Top</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-green-500"></span> Cycle Bottom</span>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-3">
+            <div className="flex flex-wrap gap-4 text-xs">
+              <span className="flex items-center gap-1"><span className="w-3 h-1 bg-amber-400 rounded"></span> BTC Price</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-1 bg-yellow-400 rounded"></span> 20W SMA (Trend)</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-1 bg-orange-500 rounded"></span> 200W MA (Floor)</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-red-500"></span> Cycle Top</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-green-500"></span> Cycle Bottom</span>
+            </div>
+            <span className="text-xs text-slate-500">
+              Showing {chartData.length} data points ({chartData[0]?.date} to {chartData[chartData.length - 1]?.date})
+            </span>
           </div>
         </div>
 
