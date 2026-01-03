@@ -1,5 +1,106 @@
-import React, { useState, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Area, ReferenceLine, Legend, ReferenceArea } from 'recharts';
+import { useMemo } from 'react';
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Area, ReferenceLine, Legend } from 'recharts';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface HistoricalDataPoint {
+  date: string;
+  price: number;
+  ma20w: number | null;
+  ma200w: number | null;
+  mvrv: number;
+  fearGreed: number;
+  piCycleProx: number;
+  event?: 'TOP' | 'BOTTOM' | 'HALVING';
+  eventDate?: string;
+  eventPrice?: number;
+  ma200wTouch?: boolean;
+  ma200wBreak?: boolean;
+}
+
+interface MA20WResult {
+  date: string;
+  price: number;
+  ma20w: number | null;
+  percentFromMA?: number;
+  trend: string;
+  signal: string;
+  reason: string;
+  trendFlipDate?: string | null;
+  weeksInTrend?: number;
+}
+
+interface MA200WResult {
+  date: string;
+  price: number;
+  ma200w: number | null;
+  percentAbove?: number;
+  signal: string;
+  reason: string;
+  buyZone?: boolean;
+}
+
+interface MVRVResult {
+  date: string;
+  price: number;
+  mvrv: number;
+  mvrvPeak: number;
+  signal: string;
+  reason: string;
+}
+
+interface PiCycleResult {
+  date: string;
+  price: number;
+  piCycleProx: number;
+  signal: string;
+  reason: string;
+}
+
+interface FearGreedResult {
+  date: string;
+  price: number;
+  fearGreed: number;
+  signal: string;
+  reason: string;
+}
+
+interface CompositeResult {
+  date: string;
+  price: number;
+  signal: string;
+  confidence: number;
+  reasons: string[];
+  trend: string;
+  ma20w: number | null;
+  ma200w: number | null;
+  mvrv: number;
+  fearGreed: number;
+  piCycleProx: number;
+  percentFrom20w?: number;
+  percentFrom200w?: number;
+}
+
+interface AccuracyResult {
+  hits: Array<{
+    eventDate: string | undefined;
+    eventPrice: number | undefined;
+    signalDate: string;
+    signalPrice: number;
+    leadLag: number;
+    signal: string;
+    reason: string | undefined;
+  }>;
+  misses: Array<{
+    eventDate: string | undefined;
+    eventPrice: number | undefined;
+    reason: string;
+  }>;
+  accuracy: string;
+  total: number;
+}
 
 // =============================================================================
 // HISTORICAL DATA - WEEKLY FROM 2011-2026
@@ -7,7 +108,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // Sources: CoinGecko, Bitcoin Magazine Pro, LookIntoBitcoin, Glassnode
 // =============================================================================
 
-const historicalData = [
+const historicalData: HistoricalDataPoint[] = [
   // 2011 Cycle
   { date: '2011-01', price: 0.30, ma20w: null, ma200w: null, mvrv: 1.0, fearGreed: 50, piCycleProx: 20 },
   { date: '2011-03', price: 1.00, ma20w: 0.5, ma200w: null, mvrv: 2.5, fearGreed: 65, piCycleProx: 45 },
@@ -153,7 +254,7 @@ const cycleBottoms = cycleEvents.filter(d => d.event === 'BOTTOM');
 
 // 20-Week SMA: THE TREND LINE
 // Above = BULL, Below = BEAR
-function evaluate20WMA(data) {
+function evaluate20WMA(data: HistoricalDataPoint[]): MA20WResult[] {
   const results = [];
   let previousTrend = null;
   let trendFlipDate = null;
@@ -213,7 +314,7 @@ function evaluate20WMA(data) {
 }
 
 // 200-Week MA: THE FLOOR
-function evaluate200WMA(data) {
+function evaluate200WMA(data: HistoricalDataPoint[]): MA200WResult[] {
   const results = [];
   
   for (const d of data) {
@@ -256,7 +357,7 @@ function evaluate200WMA(data) {
 }
 
 // MVRV Z-Score with dynamic peak detection
-function evaluateMVRV(data) {
+function evaluateMVRV(data: HistoricalDataPoint[]): MVRVResult[] {
   const results = [];
   let mvrvPeak = 0;
   let inPeakDecay = false;
@@ -300,7 +401,7 @@ function evaluateMVRV(data) {
 }
 
 // Pi Cycle
-function evaluatePiCycle(data) {
+function evaluatePiCycle(data: HistoricalDataPoint[]): PiCycleResult[] {
   return data.map(d => ({
     date: d.date,
     price: d.price,
@@ -311,7 +412,7 @@ function evaluatePiCycle(data) {
 }
 
 // Fear & Greed
-function evaluateFearGreed(data) {
+function evaluateFearGreed(data: HistoricalDataPoint[]): FearGreedResult[] {
   return data.map(d => ({
     date: d.date,
     price: d.price,
@@ -325,7 +426,7 @@ function evaluateFearGreed(data) {
 // COMPOSITE STRATEGY - NOW WITH 20W SMA TREND
 // =============================================================================
 
-function evaluateComposite(data) {
+function evaluateComposite(data: HistoricalDataPoint[]): CompositeResult[] {
   const ma20wResults = evaluate20WMA(data);
   const ma200wResults = evaluate200WMA(data);
   const mvrvResults = evaluateMVRV(data);
@@ -418,7 +519,7 @@ function evaluateComposite(data) {
 // ACCURACY CALCULATOR
 // =============================================================================
 
-function calculateAccuracy(results, events, signalTypes, windowWeeks = 8) {
+function calculateAccuracy(results: Array<{ date: string; price: number; signal: string; reason?: string; reasons?: string[] }>, events: HistoricalDataPoint[], signalTypes: string[], windowWeeks = 8): AccuracyResult {
   const hits = [];
   const misses = [];
   
@@ -469,7 +570,7 @@ function calculateAccuracy(results, events, signalTypes, windowWeeks = 8) {
 }
 
 // Calculate 20W MA trend flip accuracy
-function calculate20WMAAccuracy(results, events, signalType) {
+function calculate20WMAAccuracy(results: MA20WResult[], events: HistoricalDataPoint[], signalType: 'TOP' | 'BOTTOM'): AccuracyResult {
   const targetSignal = signalType === 'TOP' ? 'FLIP_TO_BEAR' : 'FLIP_TO_BULL';
   return calculateAccuracy(results, events.filter(e => e.event === signalType), [targetSignal], 12);
 }
@@ -479,8 +580,6 @@ function calculate20WMAAccuracy(results, events, signalType) {
 // =============================================================================
 
 export default function BacktestDashboardV4() {
-  const [selectedView, setSelectedView] = useState('overview');
-  
   // Run all evaluations
   const ma20wResults = useMemo(() => evaluate20WMA(historicalData), []);
   const ma200wResults = useMemo(() => evaluate200WMA(historicalData), []);
@@ -524,7 +623,7 @@ export default function BacktestDashboardV4() {
   const currentMa200w = ma200wResults[ma200wResults.length - 1];
   const currentComposite = compositeResults[compositeResults.length - 1];
 
-  const CustomTooltip = ({ active, payload }) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: HistoricalDataPoint }> }) => {
     if (active && payload && payload.length) {
       const d = payload[0].payload;
       return (
@@ -568,8 +667,8 @@ export default function BacktestDashboardV4() {
             <div className="mt-3 space-y-1 text-sm">
               <p className="text-slate-400">Price: <span className="text-white">${current.price?.toLocaleString()}</span></p>
               <p className="text-slate-400">20W MA: <span className="text-yellow-400">${current.ma20w?.toLocaleString()}</span></p>
-              <p className={currentMa20w?.percentFromMA >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                {currentMa20w?.percentFromMA >= 0 ? '+' : ''}{currentMa20w?.percentFromMA?.toFixed(1)}% from MA
+              <p className={(currentMa20w?.percentFromMA ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                {(currentMa20w?.percentFromMA ?? 0) >= 0 ? '+' : ''}{currentMa20w?.percentFromMA?.toFixed(1)}% from MA
               </p>
             </div>
           </div>
@@ -582,7 +681,7 @@ export default function BacktestDashboardV4() {
             </div>
             <div className="mt-3 space-y-1 text-sm">
               <p className="text-slate-400">Distance: <span className="text-white">+{currentMa200w?.percentAbove?.toFixed(0)}%</span></p>
-              <p className="text-slate-400">Drop to floor: <span className="text-red-400">-{((current.price - current.ma200w) / current.price * 100).toFixed(0)}%</span></p>
+              <p className="text-slate-400">Drop to floor: <span className="text-red-400">-{current.ma200w ? ((current.price - current.ma200w) / current.price * 100).toFixed(0) : 'N/A'}%</span></p>
               <p className={`${currentMa200w?.buyZone ? 'text-emerald-400' : 'text-slate-500'}`}>
                 {currentMa200w?.buyZone ? '✓ In Buy Zone' : '✗ Not in Buy Zone'}
               </p>
@@ -655,18 +754,18 @@ export default function BacktestDashboardV4() {
                 {trendFlips.slice(-15).map((flip, i) => {
                   // Find nearest cycle event
                   const flipIdx = historicalData.findIndex(d => d.date === flip.date);
-                  let nearestEvent = null;
-                  let leadLag = null;
-                  
+                  let nearestEvent: HistoricalDataPoint | null = null;
+                  let leadLag: number | null = null;
+
                   for (const event of cycleEvents) {
                     const eventIdx = historicalData.findIndex(d => d.date === event.date);
                     const distance = flipIdx - eventIdx;
-                    if (!nearestEvent || Math.abs(distance) < Math.abs(leadLag)) {
+                    if (leadLag === null || Math.abs(distance) < Math.abs(leadLag)) {
                       nearestEvent = event;
                       leadLag = distance;
                     }
                   }
-                  
+
                   return (
                     <tr key={i} className="border-b border-slate-700/50">
                       <td className="py-2 px-3 text-white">{flip.date}</td>
@@ -683,8 +782,8 @@ export default function BacktestDashboardV4() {
                         {nearestEvent?.eventDate} ({nearestEvent?.event})
                       </td>
                       <td className="py-2 px-3 text-center">
-                        <span className={leadLag < 0 ? 'text-emerald-400' : leadLag > 0 ? 'text-amber-400' : 'text-white'}>
-                          {leadLag > 0 ? '+' : ''}{leadLag} weeks
+                        <span className={leadLag !== null && leadLag < 0 ? 'text-emerald-400' : leadLag !== null && leadLag > 0 ? 'text-amber-400' : 'text-white'}>
+                          {leadLag !== null && leadLag > 0 ? '+' : ''}{leadLag} weeks
                         </span>
                       </td>
                     </tr>
@@ -993,8 +1092,8 @@ export default function BacktestDashboardV4() {
                 </p>
                 <p className="flex justify-between">
                   <span className="text-slate-400">Price vs 20W:</span>
-                  <span className={currentMa20w?.percentFromMA >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                    {currentMa20w?.percentFromMA >= 0 ? '+' : ''}{currentMa20w?.percentFromMA?.toFixed(1)}%
+                  <span className={(currentMa20w?.percentFromMA ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                    {(currentMa20w?.percentFromMA ?? 0) >= 0 ? '+' : ''}{currentMa20w?.percentFromMA?.toFixed(1)}%
                   </span>
                 </p>
                 <p className="flex justify-between">
