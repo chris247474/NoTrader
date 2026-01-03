@@ -60,97 +60,193 @@ export function PriceChart({ data }: PriceChartProps) {
   };
 
   return (
-    <div className="rounded-xl bg-slate-800 p-6 border border-slate-700">
-      <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">
-        Price Chart (Weekly, Log Scale)
-      </h2>
+    <div className="space-y-6">
+      {/* Linear Scale Chart */}
+      <div className="rounded-xl bg-slate-800 p-6 border border-slate-700">
+        <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">
+          Price Chart (Weekly, Linear Scale)
+        </h2>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 mb-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-amber-400" />
-          <span className="text-slate-400">BTC Price</span>
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 mb-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <span className="text-slate-400">BTC Price</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-yellow-400" />
+            <span className="text-slate-400">20W SMA (Trend)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-orange-500 border-dashed border-b-2 border-orange-500" />
+            <span className="text-slate-400">200W MA (Floor)</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-0.5 bg-yellow-400" />
-          <span className="text-slate-400">20W SMA (Trend)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-0.5 bg-orange-500 border-dashed border-b-2 border-orange-500" />
-          <span className="text-slate-400">200W MA (Floor)</span>
+
+        <div className="h-80 md:h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <defs>
+                <linearGradient id="bullGradientLinear" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.1} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="bearGradientLinear" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.1} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+
+              <XAxis
+                dataKey="date"
+                tick={{ fill: '#64748b', fontSize: 10 }}
+                tickLine={{ stroke: '#334155' }}
+                axisLine={{ stroke: '#334155' }}
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
+                }}
+                minTickGap={50}
+              />
+
+              <YAxis
+                domain={[minPrice, maxPrice]}
+                tick={{ fill: '#64748b', fontSize: 10 }}
+                tickLine={{ stroke: '#334155' }}
+                axisLine={{ stroke: '#334155' }}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                width={50}
+              />
+
+              <Tooltip content={<CustomTooltip />} />
+
+              {/* 200W MA Floor Line (dashed) */}
+              <Line
+                type="monotone"
+                dataKey="ma200w"
+                stroke="#f97316"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                dot={false}
+                connectNulls
+              />
+
+              {/* 20W SMA Trend Line */}
+              <Line
+                type="monotone"
+                dataKey="ma20w"
+                stroke="#facc15"
+                strokeWidth={2}
+                dot={false}
+                connectNulls
+              />
+
+              {/* Price Line */}
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="#fbbf24"
+                strokeWidth={2}
+                dot={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="h-80 md:h-96">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-            {/* Background areas for bull/bear */}
-            <defs>
-              <linearGradient id="bullGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.1} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
-              </linearGradient>
-              <linearGradient id="bearGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.1} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
+      {/* Log Scale Chart */}
+      <div className="rounded-xl bg-slate-800 p-6 border border-slate-700">
+        <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">
+          Price Chart (Weekly, Log Scale)
+        </h2>
 
-            <XAxis
-              dataKey="date"
-              tick={{ fill: '#64748b', fontSize: 10 }}
-              tickLine={{ stroke: '#334155' }}
-              axisLine={{ stroke: '#334155' }}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
-              }}
-              minTickGap={50}
-            />
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 mb-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <span className="text-slate-400">BTC Price</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-yellow-400" />
+            <span className="text-slate-400">20W SMA (Trend)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-orange-500 border-dashed border-b-2 border-orange-500" />
+            <span className="text-slate-400">200W MA (Floor)</span>
+          </div>
+        </div>
 
-            <YAxis
-              scale="log"
-              domain={[minPrice, maxPrice]}
-              tick={{ fill: '#64748b', fontSize: 10 }}
-              tickLine={{ stroke: '#334155' }}
-              axisLine={{ stroke: '#334155' }}
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-              width={50}
-            />
+        <div className="h-80 md:h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              {/* Background areas for bull/bear */}
+              <defs>
+                <linearGradient id="bullGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.1} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="bearGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.1} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
 
-            <Tooltip content={<CustomTooltip />} />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: '#64748b', fontSize: 10 }}
+                tickLine={{ stroke: '#334155' }}
+                axisLine={{ stroke: '#334155' }}
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
+                }}
+                minTickGap={50}
+              />
 
-            {/* 200W MA Floor Line (dashed) */}
-            <Line
-              type="monotone"
-              dataKey="ma200w"
-              stroke="#f97316"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              dot={false}
-              connectNulls
-            />
+              <YAxis
+                scale="log"
+                domain={[minPrice, maxPrice]}
+                tick={{ fill: '#64748b', fontSize: 10 }}
+                tickLine={{ stroke: '#334155' }}
+                axisLine={{ stroke: '#334155' }}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                width={50}
+              />
 
-            {/* 20W SMA Trend Line */}
-            <Line
-              type="monotone"
-              dataKey="ma20w"
-              stroke="#facc15"
-              strokeWidth={2}
-              dot={false}
-              connectNulls
-            />
+              <Tooltip content={<CustomTooltip />} />
 
-            {/* Price Line */}
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke="#fbbf24"
-              strokeWidth={2}
-              dot={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+              {/* 200W MA Floor Line (dashed) */}
+              <Line
+                type="monotone"
+                dataKey="ma200w"
+                stroke="#f97316"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                dot={false}
+                connectNulls
+              />
+
+              {/* 20W SMA Trend Line */}
+              <Line
+                type="monotone"
+                dataKey="ma20w"
+                stroke="#facc15"
+                strokeWidth={2}
+                dot={false}
+                connectNulls
+              />
+
+              {/* Price Line */}
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="#fbbf24"
+                strokeWidth={2}
+                dot={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

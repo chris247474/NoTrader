@@ -12,7 +12,11 @@
       "Bash(git branch:*)",
       "Bash(gh auth:*)",
       "Bash(gh repo create:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(gh repo delete:*)",
+      "Bash(git config:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(npm run dev:*)"
     ]
   }
 }

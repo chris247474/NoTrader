@@ -17,6 +17,7 @@
     "jsdom": "^27.4.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.11.0",
     "recharts": "^3.6.0",
     "vitest": "^4.0.16"
   },
