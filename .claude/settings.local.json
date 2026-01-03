@@ -7,7 +7,12 @@
       "Bash(npm install:*)",
       "Bash(npm run test:run:*)",
       "Bash(npm run build:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Initial implementation of Bitcoin Macro Trend Dashboard\n\nImplements a DIY MoneyLine-style indicator dashboard for Bitcoin cycle analysis.\n\nCore Features:\n- 20-Week SMA trend detection (primary bull/bear indicator)\n- 200-Week MA floor tracking (buy zone identification)\n- MVRV Z-Score with dynamic peak detection\n- Pi Cycle top indicator proximity\n- Fear & Greed Index integration\n- Composite signal generator with priority-based signals\n\nDashboard UI:\n- Trend card showing bull/bear status with time since flip\n- Floor card showing distance to 200W MA\n- Indicator gauges for MVRV, F&G, Pi Cycle\n- Price chart with moving average overlays\n- Signal history table\n\nTechnical:\n- React 18 + TypeScript + Vite\n- Tailwind CSS v4 for styling\n- Recharts for data visualization\n- 47 passing tests for indicators and backtesting\n- Live data fetching from CoinGecko and Alternative.me APIs\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git branch:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh api:*)"
     ]
   }
 }
