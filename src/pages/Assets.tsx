@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { fetchCryptoPrices, fetchCommodityPrices, fetchStockPrices } from '../lib/data/assetPrices';
 
 // =============================================================================
 // TYPES
@@ -109,11 +110,10 @@ interface TrendBadgeProps {
 function TrendBadge({ trend }: TrendBadgeProps) {
   const isBullish = trend === 'BULLISH';
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold ${
-      isBullish
-        ? 'bg-emerald-500/20 text-emerald-400'
-        : 'bg-red-500/20 text-red-400'
-    }`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold ${isBullish
+      ? 'bg-emerald-500/20 text-emerald-400'
+      : 'bg-red-500/20 text-red-400'
+      }`}>
       <span>{isBullish ? '↑' : '↓'}</span>
       {trend}
     </span>
@@ -138,11 +138,10 @@ function CategoryTabs({ active, onChange }: CategoryTabsProps) {
         <button
           key={tab.value}
           onClick={() => onChange(tab.value)}
-          className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-sm sm:text-base ${
-            active === tab.value
-              ? 'bg-amber-500 text-slate-900'
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-          }`}
+          className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-sm sm:text-base ${active === tab.value
+            ? 'bg-amber-500 text-slate-900'
+            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }`}
         >
           <span>{tab.icon}</span>
           {tab.label}
@@ -170,21 +169,19 @@ function FilterPanel({ trendFilter, onTrendFilterChange, timeFrame, onTimeFrameC
         <div className="flex gap-2">
           <button
             onClick={() => onTrendFilterChange(trendFilter === 'BULLISH' ? 'ALL' : 'BULLISH')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              trendFilter === 'BULLISH'
-                ? 'bg-emerald-500/30 text-emerald-400 ring-1 ring-emerald-500'
-                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${trendFilter === 'BULLISH'
+              ? 'bg-emerald-500/30 text-emerald-400 ring-1 ring-emerald-500'
+              : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+              }`}
           >
             ↑ BULLISH
           </button>
           <button
             onClick={() => onTrendFilterChange(trendFilter === 'BEARISH' ? 'ALL' : 'BEARISH')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              trendFilter === 'BEARISH'
-                ? 'bg-red-500/30 text-red-400 ring-1 ring-red-500'
-                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${trendFilter === 'BEARISH'
+              ? 'bg-red-500/30 text-red-400 ring-1 ring-red-500'
+              : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+              }`}
           >
             ↓ BEARISH
           </button>
@@ -199,11 +196,10 @@ function FilterPanel({ trendFilter, onTrendFilterChange, timeFrame, onTimeFrameC
             <button
               key={tf}
               onClick={() => onTimeFrameChange(tf)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                timeFrame === tf
-                  ? 'bg-amber-500 text-slate-900'
-                  : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${timeFrame === tf
+                ? 'bg-amber-500 text-slate-900'
+                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                }`}
             >
               {tf}
             </button>
@@ -223,6 +219,39 @@ export default function Assets() {
   const [trendFilter, setTrendFilter] = useState<TrendStatus | 'ALL'>('ALL');
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('Weekly');
   const [searchQuery, setSearchQuery] = useState('');
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Fetch live prices
+  const fetchPrices = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [crypto, stocks, commodities] = await Promise.all([
+        fetchCryptoPrices().catch(() => ({})),
+        fetchStockPrices(),
+        fetchCommodityPrices(),
+      ]);
+      setLivePrices({ ...crypto, ...stocks, ...commodities });
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Failed to fetch prices:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch prices on mount and every 60 seconds
+  useEffect(() => {
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchPrices]);
+
+  // Get price for an asset (use live price if available, otherwise default)
+  const getAssetPrice = useCallback((asset: Asset): number => {
+    return livePrices[asset.id] ?? asset.price;
+  }, [livePrices]);
 
   // Filter assets by category, trend, and search
   const filteredAssets = useMemo(() => {
@@ -256,9 +285,26 @@ export default function Assets() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Asset Trends</h1>
-          <p className="text-slate-400">20-Week SMA trend analysis across Crypto, Stocks & Commodities</p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Asset Trends</h1>
+            <p className="text-slate-400">20-Week SMA trend analysis across Crypto, Stocks & Commodities</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Loading indicator */}
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+              <span className="text-sm text-slate-400">
+                {isLoading ? 'Updating...' : 'Live'}
+              </span>
+            </div>
+            {/* Last updated */}
+            {lastUpdated && (
+              <span className="text-sm text-slate-500">
+                {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Category Tabs */}
@@ -328,9 +374,8 @@ export default function Assets() {
                     {filteredAssets.map((asset, index) => (
                       <tr
                         key={asset.id}
-                        className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${
-                          index % 2 === 0 ? 'bg-slate-800/20' : ''
-                        }`}
+                        className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-slate-800/20' : ''
+                          }`}
                       >
                         <td className="py-3 px-3 sm:px-4 text-slate-500 text-sm">{asset.rank}</td>
                         <td className="py-3 px-3 sm:px-4">
@@ -346,7 +391,7 @@ export default function Assets() {
                           <TrendBadge trend={asset.trend} />
                         </td>
                         <td className="py-3 px-3 sm:px-4 text-center text-slate-300 text-sm hidden sm:table-cell">{asset.timeSinceFlipped}</td>
-                        <td className="py-3 px-3 sm:px-4 text-right font-mono text-white text-sm">{formatPrice(asset.price)}</td>
+                        <td className="py-3 px-3 sm:px-4 text-right font-mono text-white text-sm">{formatPrice(getAssetPrice(asset))}</td>
                         {category === 'crypto' && (
                           <td className="py-3 px-3 sm:px-4 text-right text-slate-300 text-sm hidden md:table-cell">{formatMarketCap(asset.marketCap)}</td>
                         )}
