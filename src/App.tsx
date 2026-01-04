@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Backtest from './pages/Backtest';
 import Assets from './pages/Assets';
+import AssetDetail from './pages/AssetDetail';
 
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -74,6 +75,7 @@ function App() {
       </nav>
       <Routes>
         <Route path="/" element={<Assets />} />
+        <Route path="/asset/:category/:assetId" element={<AssetDetail />} />
         <Route path="/trend-analysis" element={<Dashboard />} />
         <Route path="/backtest" element={<Backtest />} />
       </Routes>
