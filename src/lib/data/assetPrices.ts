@@ -7,7 +7,12 @@
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
 // Yahoo Finance API for stocks and commodities (no API key required)
+// Note: Yahoo Finance blocks CORS, so we use a proxy for browser requests
 const YAHOO_FINANCE_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
+
+// CORS proxy to bypass Yahoo Finance CORS restrictions
+// Using corsproxy.io which is reliable and free for client-side requests
+const CORS_PROXY = 'https://corsproxy.io/?';
 
 // Cache for API responses
 interface CacheEntry<T> {
@@ -89,12 +94,14 @@ const COMMODITY_SYMBOL_MAP: Record<string, string> = {
 
 /**
  * Fetch a single price from Yahoo Finance
+ * Uses CORS proxy to bypass browser CORS restrictions
  */
 async function fetchYahooPrice(symbol: string): Promise<number | null> {
     try {
-        const response = await fetch(
-            `${YAHOO_FINANCE_BASE}/${symbol}?interval=1d&range=1d`
-        );
+        const yahooUrl = `${YAHOO_FINANCE_BASE}/${symbol}?interval=1d&range=1d`;
+        const proxyUrl = `${CORS_PROXY}${encodeURIComponent(yahooUrl)}`;
+
+        const response = await fetch(proxyUrl);
 
         if (!response.ok) {
             console.warn(`Yahoo Finance returned ${response.status} for ${symbol}`);
