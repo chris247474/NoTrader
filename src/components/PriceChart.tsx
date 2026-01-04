@@ -11,7 +11,7 @@ import { formatPrice } from '../lib/utils';
 import type { PriceData } from '../lib/data/types';
 
 // Time range options
-type TimeRange = 'ALL' | '10Y' | '5Y' | '3Y' | '2Y' | '1Y' | '6M';
+export type TimeRange = 'ALL' | '10Y' | '5Y' | '3Y' | '2Y' | '1Y' | '6M';
 
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: 'ALL', label: 'All' },
@@ -23,7 +23,7 @@ const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: '6M', label: '6M' },
 ];
 
-function filterDataByTimeRange<T extends { date: string }>(data: T[], range: TimeRange): T[] {
+export function filterDataByTimeRange<T extends { date: string }>(data: T[], range: TimeRange): T[] {
   if (range === 'ALL' || data.length === 0) return data;
 
   // Get the most recent date from the data
@@ -70,11 +70,10 @@ function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
-          className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
-            value === option.value
+          className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${value === option.value
               ? 'bg-amber-500 text-slate-900'
               : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600/50 hover:text-slate-300'
-          }`}
+            }`}
         >
           {option.label}
         </button>
