@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchCryptoPrices, fetchCommodityPrices, fetchStockPrices } from '../lib/data/assetPrices';
 
 // =============================================================================
@@ -215,6 +216,7 @@ function FilterPanel({ trendFilter, onTrendFilterChange, timeFrame, onTimeFrameC
 // =============================================================================
 
 export default function Assets() {
+  const navigate = useNavigate();
   const [category, setCategory] = useState<AssetCategory>('crypto');
   const [trendFilter, setTrendFilter] = useState<TrendStatus | 'ALL'>('ALL');
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('Weekly');
@@ -374,7 +376,8 @@ export default function Assets() {
                     {filteredAssets.map((asset, index) => (
                       <tr
                         key={asset.id}
-                        className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-slate-800/20' : ''
+                        onClick={() => navigate(`/asset/${asset.category}/${asset.id}`)}
+                        className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${index % 2 === 0 ? 'bg-slate-800/20' : ''
                           }`}
                       >
                         <td className="py-3 px-3 sm:px-4 text-slate-500 text-sm">{asset.rank}</td>
