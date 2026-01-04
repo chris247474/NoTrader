@@ -6,6 +6,9 @@
 // CoinGecko API for crypto prices
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
+// Yahoo Finance API for stocks and commodities (no API key required)
+const YAHOO_FINANCE_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
+
 // Cache for API responses
 interface CacheEntry<T> {
     data: T;
@@ -57,6 +60,87 @@ const CRYPTO_ID_MAP: Record<string, string> = {
     fil: 'filecoin',
 };
 
+// Mapping from our asset IDs to Yahoo Finance symbols
+const STOCK_SYMBOL_MAP: Record<string, string> = {
+    spy: 'SPY',
+    qqq: 'QQQ',
+    dia: 'DIA',
+    aapl: 'AAPL',
+    msft: 'MSFT',
+    googl: 'GOOGL',
+    amzn: 'AMZN',
+    nvda: 'NVDA',
+    tsla: 'TSLA',
+    meta: 'META',
+    mstr: 'MSTR',
+    coin: 'COIN',
+};
+
+// Mapping from our asset IDs to Yahoo Finance commodity symbols
+const COMMODITY_SYMBOL_MAP: Record<string, string> = {
+    gold: 'GC=F',      // Gold Futures
+    silver: 'SI=F',    // Silver Futures
+    platinum: 'PL=F',  // Platinum Futures
+    palladium: 'PA=F', // Palladium Futures
+    copper: 'HG=F',    // Copper Futures
+    oil: 'BZ=F',       // Brent Crude Oil Futures
+    natgas: 'NG=F',    // Natural Gas Futures
+};
+
+/**
+ * Fetch a single price from Yahoo Finance
+ */
+async function fetchYahooPrice(symbol: string): Promise<number | null> {
+    try {
+        const response = await fetch(
+            `${YAHOO_FINANCE_BASE}/${symbol}?interval=1d&range=1d`
+        );
+
+        if (!response.ok) {
+            console.warn(`Yahoo Finance returned ${response.status} for ${symbol}`);
+            return null;
+        }
+
+        const data = await response.json();
+        const result = data?.chart?.result?.[0];
+
+        if (!result) {
+            return null;
+        }
+
+        // Get the current price from regularMarketPrice or the last close
+        const price = result.meta?.regularMarketPrice ??
+            result.indicators?.quote?.[0]?.close?.slice(-1)?.[0];
+
+        return typeof price === 'number' ? price : null;
+    } catch (error) {
+        console.warn(`Failed to fetch Yahoo price for ${symbol}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Fetch multiple prices from Yahoo Finance in parallel
+ */
+async function fetchYahooPrices(symbolMap: Record<string, string>): Promise<AssetPrice> {
+    const entries = Object.entries(symbolMap);
+    const results = await Promise.all(
+        entries.map(async ([ourId, yahooSymbol]) => {
+            const price = await fetchYahooPrice(yahooSymbol);
+            return [ourId, price] as [string, number | null];
+        })
+    );
+
+    const prices: AssetPrice = {};
+    for (const [ourId, price] of results) {
+        if (price !== null) {
+            prices[ourId] = price;
+        }
+    }
+
+    return prices;
+}
+
 /**
  * Fetch crypto prices from CoinGecko
  */
@@ -90,57 +174,38 @@ export async function fetchCryptoPrices(): Promise<AssetPrice> {
 }
 
 /**
- * Fetch commodity prices
- * Note: Free commodity APIs are limited. Using reasonable sample values.
- * In production, you would integrate with a paid API like Alpha Vantage or Metals.live
+ * Fetch commodity prices from Yahoo Finance
  */
 export async function fetchCommodityPrices(): Promise<AssetPrice> {
     const cacheKey = 'commodity_prices';
     const cached = getCached<AssetPrice>(cacheKey);
     if (cached !== null) return cached;
 
-    // Sample commodity prices - in a real app, these would come from an API
-    // Values are approximate market prices as of late 2025/early 2026
-    const prices: AssetPrice = {
-        gold: 2650 + Math.random() * 100 - 50,      // ~$2600-2700/oz
-        silver: 30 + Math.random() * 2,              // ~$29-32/oz
-        platinum: 960 + Math.random() * 50,          // ~$935-1010/oz
-        palladium: 940 + Math.random() * 50,         // ~$915-990/oz
-        copper: 4.0 + Math.random() * 0.3,           // ~$3.85-4.15/lb
-        oil: 72 + Math.random() * 5,                 // ~$70-77/barrel
-        natgas: 3.2 + Math.random() * 0.5,           // ~$2.95-3.7/MMBtu
-    };
+    const prices = await fetchYahooPrices(COMMODITY_SYMBOL_MAP);
 
-    setCache(cacheKey, prices);
+    // Only cache if we got at least some prices
+    if (Object.keys(prices).length > 0) {
+        setCache(cacheKey, prices);
+    }
+
     return prices;
 }
 
 /**
- * Fetch stock prices
- * Note: Stock APIs typically require API keys. Using sample values for now.
+ * Fetch stock prices from Yahoo Finance
  */
 export async function fetchStockPrices(): Promise<AssetPrice> {
     const cacheKey = 'stock_prices';
     const cached = getCached<AssetPrice>(cacheKey);
     if (cached !== null) return cached;
 
-    // Sample stock prices
-    const prices: AssetPrice = {
-        spy: 595 + Math.random() * 10,
-        qqq: 515 + Math.random() * 10,
-        dia: 425 + Math.random() * 10,
-        aapl: 245 + Math.random() * 10,
-        msft: 435 + Math.random() * 10,
-        googl: 190 + Math.random() * 5,
-        amzn: 225 + Math.random() * 5,
-        nvda: 140 + Math.random() * 10,
-        tsla: 410 + Math.random() * 10,
-        meta: 610 + Math.random() * 10,
-        mstr: 355 + Math.random() * 10,
-        coin: 265 + Math.random() * 10,
-    };
+    const prices = await fetchYahooPrices(STOCK_SYMBOL_MAP);
 
-    setCache(cacheKey, prices);
+    // Only cache if we got at least some prices
+    if (Object.keys(prices).length > 0) {
+        setCache(cacheKey, prices);
+    }
+
     return prices;
 }
 
@@ -154,8 +219,8 @@ export async function fetchAllAssetPrices(): Promise<{
 }> {
     const [crypto, stocks, commodities] = await Promise.all([
         fetchCryptoPrices().catch(() => ({})),
-        fetchStockPrices(),
-        fetchCommodityPrices(),
+        fetchStockPrices().catch(() => ({})),
+        fetchCommodityPrices().catch(() => ({})),
     ]);
 
     return { crypto, stocks, commodities };
