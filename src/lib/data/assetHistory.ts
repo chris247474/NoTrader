@@ -171,14 +171,23 @@ async function fetchCryptoHistory(assetId: string, days: number = 730): Promise<
   }
 
   try {
-    // Use CORS proxy for CoinGecko requests from browser
+    // Try direct request first, fall back to CORS proxy if needed
     const directUrl = `${COINGECKO_BASE}/coins/${geckoId}/market_chart?vs_currency=usd&days=${days}&interval=daily`;
-    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(directUrl)}`;
 
-    const response = await fetch(proxyUrl);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    let response: Response;
+    try {
+      response = await fetch(directUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (directError) {
+      // If direct request fails, try with CORS proxy
+      console.log(`Direct CoinGecko request failed, trying CORS proxy...`);
+      const proxyUrl = `${CORS_PROXY}${encodeURIComponent(directUrl)}`;
+      response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
     }
 
     const data = await response.json();
