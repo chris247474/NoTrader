@@ -171,9 +171,11 @@ async function fetchCryptoHistory(assetId: string, days: number = 730): Promise<
   }
 
   try {
-    const response = await fetch(
-      `${COINGECKO_BASE}/coins/${geckoId}/market_chart?vs_currency=usd&days=${days}&interval=daily`
-    );
+    // Use CORS proxy for CoinGecko requests from browser
+    const directUrl = `${COINGECKO_BASE}/coins/${geckoId}/market_chart?vs_currency=usd&days=${days}&interval=daily`;
+    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(directUrl)}`;
+
+    const response = await fetch(proxyUrl);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
