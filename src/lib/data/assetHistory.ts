@@ -32,30 +32,6 @@ function setCache<T>(key: string, data: T): void {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
-// Mapping from our asset IDs to CoinGecko IDs
-const CRYPTO_ID_MAP: Record<string, string> = {
-  btc: 'bitcoin',
-  eth: 'ethereum',
-  bnb: 'binancecoin',
-  xrp: 'ripple',
-  sol: 'solana',
-  ada: 'cardano',
-  doge: 'dogecoin',
-  trx: 'tron',
-  avax: 'avalanche-2',
-  link: 'chainlink',
-  dot: 'polkadot',
-  matic: 'matic-network',
-  shib: 'shiba-inu',
-  ltc: 'litecoin',
-  uni: 'uniswap',
-  atom: 'cosmos',
-  xlm: 'stellar',
-  apt: 'aptos',
-  pepe: 'pepe',
-  fil: 'filecoin',
-};
-
 // Mapping from our asset IDs to Yahoo Finance symbols
 const STOCK_SYMBOL_MAP: Record<string, string> = {
   spy: 'SPY',
@@ -158,27 +134,38 @@ function calculateTrendFlips(priceData: AssetPricePoint[]): TrendFlip[] {
 
 /**
  * Fetch historical crypto data from CoinGecko
+ * @param coinId - CoinGecko coin ID (e.g., "bitcoin", "ethereum")
+ * @param coinName - Display name (e.g., "Bitcoin")
+ * @param coinSymbol - Symbol (e.g., "BTC")
  */
-async function fetchCryptoHistory(assetId: string, days: number = 730): Promise<AssetHistoryData | null> {
-  const cacheKey = `crypto_history_${assetId}_${days}`;
+async function fetchCryptoHistory(
+  coinId: string,
+  coinName?: string,
+  coinSymbol?: string,
+  days: number = 730
+): Promise<AssetHistoryData | null> {
+  const cacheKey = `crypto_history_${coinId}_${days}`;
   const cached = getCached<AssetHistoryData>(cacheKey);
   if (cached !== null) return cached;
 
-  const geckoId = CRYPTO_ID_MAP[assetId];
-  if (!geckoId) {
-    console.warn(`Unknown crypto asset ID: ${assetId}`);
-    return null;
-  }
-
   try {
-    // Use CORS proxy for CoinGecko requests from browser
-    const directUrl = `${COINGECKO_BASE}/coins/${geckoId}/market_chart?vs_currency=usd&days=${days}&interval=daily`;
-    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(directUrl)}`;
+    // Try direct request first, fall back to CORS proxy if needed
+    const directUrl = `${COINGECKO_BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}&interval=daily`;
 
-    const response = await fetch(proxyUrl);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    let response: Response;
+    try {
+      response = await fetch(directUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (directError) {
+      // If direct request fails, try with CORS proxy
+      console.log(`Direct CoinGecko request failed, trying CORS proxy...`);
+      const proxyUrl = `${CORS_PROXY}${encodeURIComponent(directUrl)}`;
+      response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
     }
 
     const data = await response.json();
@@ -207,9 +194,13 @@ async function fetchCryptoHistory(assetId: string, days: number = 730): Promise<
       lastPoint?.ma20w === null ? 'NO_DATA' :
         lastPoint.price >= lastPoint.ma20w ? 'BULL' : 'BEAR';
 
+    // Use provided name/symbol or derive from coinId
+    const displayName = coinName || coinId.charAt(0).toUpperCase() + coinId.slice(1).replace(/-/g, ' ');
+    const displaySymbol = coinSymbol || coinId.toUpperCase();
+
     const result: AssetHistoryData = {
-      symbol: assetId.toUpperCase(),
-      name: geckoId.charAt(0).toUpperCase() + geckoId.slice(1),
+      symbol: displaySymbol,
+      name: displayName,
       category: 'crypto',
       priceData,
       trendFlips,
@@ -220,7 +211,7 @@ async function fetchCryptoHistory(assetId: string, days: number = 730): Promise<
     setCache(cacheKey, result);
     return result;
   } catch (error) {
-    console.error(`Failed to fetch crypto history for ${assetId}:`, error);
+    console.error(`Failed to fetch crypto history for ${coinId}:`, error);
     return null;
   }
 }
@@ -359,13 +350,6 @@ export function getYahooSymbol(assetId: string, category: AssetCategory): string
     default:
       return null;
   }
-}
-
-/**
- * Get CoinGecko ID for a crypto asset
- */
-export function getCoinGeckoId(assetId: string): string | null {
-  return CRYPTO_ID_MAP[assetId] || null;
 }
 
 /**
