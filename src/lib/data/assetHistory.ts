@@ -161,7 +161,7 @@ async function fetchCryptoHistory(
     } catch (directError) {
       // If direct request fails, try with CORS proxy
       console.log(`Direct CoinGecko request failed, trying CORS proxy...`);
-      const proxyUrl = `${CORS_PROXY}${encodeURIComponent(directUrl)}`;
+      const proxyUrl = `${CORS_PROXY}${directUrl}`;
       response = await fetch(proxyUrl);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
