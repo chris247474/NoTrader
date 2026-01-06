@@ -30,6 +30,9 @@ interface Asset {
 // STATIC DATA - Stocks and Commodities (these don't change often)
 // =============================================================================
 
+// Magnificent Seven stock IDs
+const MAG7_IDS = ['aapl', 'msft', 'googl', 'amzn', 'nvda', 'tsla', 'meta'];
+
 const stocksData: Asset[] = [
   { id: 'spy', rank: 1, name: 'S&P 500', symbol: 'SPY', icon: '📊', category: 'stocks', price: 598.42, trend: 'BULLISH', timeSinceFlipped: '3M 2W', ma20w: 545, percentFromMA: 9.8 },
   { id: 'qqq', rank: 2, name: 'NASDAQ 100', symbol: 'QQQ', icon: '📈', category: 'stocks', price: 518.75, trend: 'BULLISH', timeSinceFlipped: '2M 3W', ma20w: 480, percentFromMA: 8.1 },
@@ -162,12 +165,36 @@ interface FilterPanelProps {
   onTrendFilterChange: (filter: TrendStatus | 'ALL') => void;
   timeFrame: TimeFrame;
   onTimeFrameChange: (tf: TimeFrame) => void;
+  category: AssetCategory;
+  mag7Filter: boolean;
+  onMag7FilterChange: (enabled: boolean) => void;
 }
 
-function FilterPanel({ trendFilter, onTrendFilterChange, timeFrame, onTimeFrameChange }: FilterPanelProps) {
+function FilterPanel({ trendFilter, onTrendFilterChange, timeFrame, onTimeFrameChange, category, mag7Filter, onMag7FilterChange }: FilterPanelProps) {
   return (
     <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-4">
       <h3 className="text-white font-bold">Filter</h3>
+
+      {/* MAG7 Filter - Only show for stocks */}
+      {category === 'stocks' && (
+        <div>
+          <label className="text-slate-400 text-sm block mb-2">STOCK GROUP</label>
+          <button
+            onClick={() => onMag7FilterChange(!mag7Filter)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mag7Filter
+              ? 'bg-purple-500/30 text-purple-400 ring-1 ring-purple-500'
+              : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+              }`}
+          >
+            MAG7
+          </button>
+          {mag7Filter && (
+            <p className="text-slate-500 text-xs mt-2">
+              Showing: AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA, META
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Trend Filter */}
       <div>
@@ -229,6 +256,7 @@ export default function Assets() {
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [mag7Filter, setMag7Filter] = useState(false);
 
   // Dynamic crypto coins state
   const [cryptoCoins, setCryptoCoins] = useState<CryptoCoin[]>([]);
@@ -302,16 +330,23 @@ export default function Assets() {
     return livePrices[asset.id] ?? asset.price;
   }, [livePrices]);
 
-  // Filter assets by trend and search
+  // Filter assets by trend, search, and MAG7
   const filteredAssets = useMemo(() => {
     return allAssets
+      .filter((asset) => {
+        // MAG7 filter (only applies to stocks)
+        if (category === 'stocks' && mag7Filter) {
+          return MAG7_IDS.includes(asset.id);
+        }
+        return true;
+      })
       .filter((asset) => trendFilter === 'ALL' || asset.trend === trendFilter)
       .filter((asset) =>
         searchQuery === '' ||
         asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
       );
-  }, [allAssets, trendFilter, searchQuery]);
+  }, [allAssets, trendFilter, searchQuery, category, mag7Filter]);
 
   // Calculate stats for current category
   const stats = useMemo(() => {
@@ -477,6 +512,9 @@ export default function Assets() {
               onTrendFilterChange={setTrendFilter}
               timeFrame={timeFrame}
               onTimeFrameChange={setTimeFrame}
+              category={category}
+              mag7Filter={mag7Filter}
+              onMag7FilterChange={setMag7Filter}
             />
 
             {/* Legend */}
