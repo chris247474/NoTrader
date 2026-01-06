@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCryptoPrices, fetchCommodityPrices, fetchStockPrices } from '../lib/data/assetPrices';
+import { fetchTopCoins, type CryptoCoin } from '../lib/data/cryptoCoins';
+import { fetchStockPrices, fetchCommodityPrices } from '../lib/data/assetPrices';
 
 // =============================================================================
 // TYPES
@@ -26,33 +27,10 @@ interface Asset {
 }
 
 // =============================================================================
-// SAMPLE DATA - Top Cryptocurrencies, Stocks, and Commodities
+// STATIC DATA - Stocks and Commodities (these don't change often)
 // =============================================================================
 
-const assetsData: Asset[] = [
-  // Top 20 Cryptocurrencies
-  { id: 'btc', rank: 1, name: 'Bitcoin', symbol: 'BTC', icon: '₿', category: 'crypto', price: 88890.36, marketCap: 1.78e12, trend: 'BEARISH', timeSinceFlipped: '1M 3W 2D', ma20w: 102000, percentFromMA: -12.9 },
-  { id: 'eth', rank: 2, name: 'Ethereum', symbol: 'ETH', icon: 'Ξ', category: 'crypto', price: 3017.75, marketCap: 364.83e9, trend: 'BEARISH', timeSinceFlipped: '1M 3W 2D', ma20w: 3500, percentFromMA: -13.8 },
-  { id: 'bnb', rank: 3, name: 'BNB', symbol: 'BNB', icon: '🔶', category: 'crypto', price: 685.80, marketCap: 119.12e9, trend: 'BEARISH', timeSinceFlipped: '1M 3W 2D', ma20w: 720, percentFromMA: -4.7 },
-  { id: 'xrp', rank: 4, name: 'XRP', symbol: 'XRP', icon: '✕', category: 'crypto', price: 2.17, marketCap: 114.53e9, trend: 'BULLISH', timeSinceFlipped: '2M 1W', ma20w: 1.85, percentFromMA: 17.3 },
-  { id: 'sol', rank: 5, name: 'Solana', symbol: 'SOL', icon: '◎', category: 'crypto', price: 187.22, marketCap: 71.82e9, trend: 'BEARISH', timeSinceFlipped: '1M 4W 2D', ma20w: 210, percentFromMA: -10.8 },
-  { id: 'ada', rank: 6, name: 'Cardano', symbol: 'ADA', icon: '₳', category: 'crypto', price: 0.89, marketCap: 31.2e9, trend: 'BEARISH', timeSinceFlipped: '3W 4D', ma20w: 1.05, percentFromMA: -15.2 },
-  { id: 'doge', rank: 7, name: 'Dogecoin', symbol: 'DOGE', icon: '🐕', category: 'crypto', price: 0.32, marketCap: 47.1e9, trend: 'BEARISH', timeSinceFlipped: '1M 3W 2D', ma20w: 0.38, percentFromMA: -15.8 },
-  { id: 'trx', rank: 8, name: 'TRON', symbol: 'TRX', icon: '⟁', category: 'crypto', price: 0.29, marketCap: 27.08e9, trend: 'BEARISH', timeSinceFlipped: '2M 1W 6D', ma20w: 0.32, percentFromMA: -9.4 },
-  { id: 'avax', rank: 9, name: 'Avalanche', symbol: 'AVAX', icon: '🔺', category: 'crypto', price: 35.42, marketCap: 14.5e9, trend: 'BEARISH', timeSinceFlipped: '1M 2W', ma20w: 42, percentFromMA: -15.7 },
-  { id: 'link', rank: 10, name: 'Chainlink', symbol: 'LINK', icon: '⬡', category: 'crypto', price: 22.15, marketCap: 14.1e9, trend: 'BULLISH', timeSinceFlipped: '3W 2D', ma20w: 19.50, percentFromMA: 13.6 },
-  { id: 'dot', rank: 11, name: 'Polkadot', symbol: 'DOT', icon: '●', category: 'crypto', price: 6.98, marketCap: 10.8e9, trend: 'BULLISH', timeSinceFlipped: '1D 10H', ma20w: 6.20, percentFromMA: 12.6 },
-  { id: 'matic', rank: 12, name: 'Polygon', symbol: 'MATIC', icon: '⬡', category: 'crypto', price: 0.48, marketCap: 4.7e9, trend: 'BEARISH', timeSinceFlipped: '2M 3W', ma20w: 0.65, percentFromMA: -26.2 },
-  { id: 'shib', rank: 13, name: 'Shiba Inu', symbol: 'SHIB', icon: '🐕', category: 'crypto', price: 0.000021, marketCap: 12.4e9, trend: 'BEARISH', timeSinceFlipped: '1M 1W', ma20w: 0.000028, percentFromMA: -25.0 },
-  { id: 'ltc', rank: 14, name: 'Litecoin', symbol: 'LTC', icon: 'Ł', category: 'crypto', price: 102.50, marketCap: 7.7e9, trend: 'BULLISH', timeSinceFlipped: '2W 3D', ma20w: 95, percentFromMA: 7.9 },
-  { id: 'uni', rank: 15, name: 'Uniswap', symbol: 'UNI', icon: '🦄', category: 'crypto', price: 13.25, marketCap: 8.0e9, trend: 'BULLISH', timeSinceFlipped: '1W 5D', ma20w: 11.80, percentFromMA: 12.3 },
-  { id: 'atom', rank: 16, name: 'Cosmos', symbol: 'ATOM', icon: '⚛', category: 'crypto', price: 6.42, marketCap: 2.5e9, trend: 'BEARISH', timeSinceFlipped: '3W 1D', ma20w: 8.20, percentFromMA: -21.7 },
-  { id: 'xlm', rank: 17, name: 'Stellar', symbol: 'XLM', icon: '✦', category: 'crypto', price: 0.42, marketCap: 12.8e9, trend: 'BULLISH', timeSinceFlipped: '1M 2W', ma20w: 0.35, percentFromMA: 20.0 },
-  { id: 'apt', rank: 18, name: 'Aptos', symbol: 'APT', icon: '🔷', category: 'crypto', price: 8.84, marketCap: 4.4e9, trend: 'BULLISH', timeSinceFlipped: '1D 10H', ma20w: 7.50, percentFromMA: 17.9 },
-  { id: 'pepe', rank: 19, name: 'Pepe', symbol: 'PEPE', icon: '🐸', category: 'crypto', price: 0.000018, marketCap: 7.6e9, trend: 'BULLISH', timeSinceFlipped: '1D 10H', ma20w: 0.000015, percentFromMA: 20.0 },
-  { id: 'fil', rank: 20, name: 'Filecoin', symbol: 'FIL', icon: '📁', category: 'crypto', price: 5.45, marketCap: 3.1e9, trend: 'BULLISH', timeSinceFlipped: '1D 10H', ma20w: 4.80, percentFromMA: 13.5 },
-
-  // Popular Stocks & Indices
+const stocksData: Asset[] = [
   { id: 'spy', rank: 1, name: 'S&P 500', symbol: 'SPY', icon: '📊', category: 'stocks', price: 598.42, trend: 'BULLISH', timeSinceFlipped: '3M 2W', ma20w: 545, percentFromMA: 9.8 },
   { id: 'qqq', rank: 2, name: 'NASDAQ 100', symbol: 'QQQ', icon: '📈', category: 'stocks', price: 518.75, trend: 'BULLISH', timeSinceFlipped: '2M 3W', ma20w: 480, percentFromMA: 8.1 },
   { id: 'dia', rank: 3, name: 'Dow Jones', symbol: 'DIA', icon: '🏛️', category: 'stocks', price: 428.30, trend: 'BULLISH', timeSinceFlipped: '4M 1W', ma20w: 405, percentFromMA: 5.8 },
@@ -65,8 +43,9 @@ const assetsData: Asset[] = [
   { id: 'meta', rank: 10, name: 'Meta', symbol: 'META', icon: '👤', category: 'stocks', price: 612.20, trend: 'BULLISH', timeSinceFlipped: '4M 3W', ma20w: 520, percentFromMA: 17.7 },
   { id: 'mstr', rank: 11, name: 'MicroStrategy', symbol: 'MSTR', icon: '🏢', category: 'stocks', price: 358.40, trend: 'BEARISH', timeSinceFlipped: '3W 2D', ma20w: 420, percentFromMA: -14.7 },
   { id: 'coin', rank: 12, name: 'Coinbase', symbol: 'COIN', icon: '🪙', category: 'stocks', price: 268.90, trend: 'BEARISH', timeSinceFlipped: '1M 2W', ma20w: 310, percentFromMA: -13.3 },
+];
 
-  // Commodities (Metals)
+const commoditiesData: Asset[] = [
   { id: 'gold', rank: 1, name: 'Gold', symbol: 'GOLD', icon: '🥇', category: 'commodities', price: 2683.74, trend: 'BULLISH', timeSinceFlipped: '11M 1W', ma20w: 2450, percentFromMA: 9.5 },
   { id: 'silver', rank: 2, name: 'Silver', symbol: 'SILVER', icon: '🥈', category: 'commodities', price: 31.11, trend: 'BULLISH', timeSinceFlipped: '7M 10H', ma20w: 28.50, percentFromMA: 9.2 },
   { id: 'platinum', rank: 3, name: 'Platinum', symbol: 'PLATINUM', icon: '⚪', category: 'commodities', price: 985.34, trend: 'BULLISH', timeSinceFlipped: '7M 2W', ma20w: 920, percentFromMA: 7.1 },
@@ -100,6 +79,28 @@ function formatMarketCap(cap: number | undefined): string {
   return `$${cap.toLocaleString()}`;
 }
 
+// Convert CryptoCoin to Asset format
+function coinToAsset(coin: CryptoCoin): Asset {
+  // Simulate trend based on 24h price change (simplified)
+  const trend: TrendStatus = coin.priceChangePercentage24h >= 0 ? 'BULLISH' : 'BEARISH';
+  const timeSinceFlipped = coin.priceChangePercentage24h >= 0 ? '~' : '~';
+
+  return {
+    id: coin.id, // Use CoinGecko ID directly
+    rank: coin.marketCapRank,
+    name: coin.name,
+    symbol: coin.symbol,
+    icon: '🪙', // Default icon, could map specific icons
+    category: 'crypto',
+    price: coin.currentPrice,
+    marketCap: coin.marketCap,
+    trend,
+    timeSinceFlipped,
+    ma20w: coin.currentPrice * (trend === 'BULLISH' ? 0.9 : 1.1), // Simplified
+    percentFromMA: coin.priceChangePercentage24h,
+  };
+}
+
 // =============================================================================
 // COMPONENTS
 // =============================================================================
@@ -124,13 +125,14 @@ function TrendBadge({ trend }: TrendBadgeProps) {
 interface CategoryTabsProps {
   active: AssetCategory;
   onChange: (cat: AssetCategory) => void;
+  cryptoCount: number;
 }
 
-function CategoryTabs({ active, onChange }: CategoryTabsProps) {
-  const tabs: { value: AssetCategory; label: string; icon: string }[] = [
-    { value: 'crypto', label: 'Crypto', icon: '₿' },
-    { value: 'stocks', label: 'Stocks', icon: '📈' },
-    { value: 'commodities', label: 'Commodities', icon: '🥇' },
+function CategoryTabs({ active, onChange, cryptoCount }: CategoryTabsProps) {
+  const tabs: { value: AssetCategory; label: string; icon: string; count?: number }[] = [
+    { value: 'crypto', label: 'Crypto', icon: '₿', count: cryptoCount },
+    { value: 'stocks', label: 'Stocks', icon: '📈', count: stocksData.length },
+    { value: 'commodities', label: 'Commodities', icon: '🥇', count: commoditiesData.length },
   ];
 
   return (
@@ -146,6 +148,9 @@ function CategoryTabs({ active, onChange }: CategoryTabsProps) {
         >
           <span>{tab.icon}</span>
           {tab.label}
+          {tab.count !== undefined && (
+            <span className="text-xs opacity-70">({tab.count})</span>
+          )}
         </button>
       ))}
     </div>
@@ -225,16 +230,35 @@ export default function Assets() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Fetch live prices
+  // Dynamic crypto coins state
+  const [cryptoCoins, setCryptoCoins] = useState<CryptoCoin[]>([]);
+  const [cryptoLoading, setCryptoLoading] = useState(true);
+
+  // Fetch crypto coins from CoinGecko
+  useEffect(() => {
+    async function loadCryptoCoins() {
+      setCryptoLoading(true);
+      try {
+        const coins = await fetchTopCoins(500);
+        setCryptoCoins(coins);
+      } catch (error) {
+        console.error('Failed to fetch crypto coins:', error);
+      } finally {
+        setCryptoLoading(false);
+      }
+    }
+    loadCryptoCoins();
+  }, []);
+
+  // Fetch live prices for stocks and commodities
   const fetchPrices = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [crypto, stocks, commodities] = await Promise.all([
-        fetchCryptoPrices().catch(() => ({})),
+      const [stocks, commodities] = await Promise.all([
         fetchStockPrices(),
         fetchCommodityPrices(),
       ]);
-      setLivePrices({ ...crypto, ...stocks, ...commodities });
+      setLivePrices({ ...stocks, ...commodities });
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch prices:', error);
@@ -250,38 +274,58 @@ export default function Assets() {
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
-  // Get price for an asset (use live price if available, otherwise default)
+  // Convert crypto coins to assets
+  const cryptoAssets = useMemo(() => {
+    return cryptoCoins.map(coinToAsset);
+  }, [cryptoCoins]);
+
+  // Get all assets for current category
+  const allAssets = useMemo((): Asset[] => {
+    switch (category) {
+      case 'crypto':
+        return cryptoAssets;
+      case 'stocks':
+        return stocksData;
+      case 'commodities':
+        return commoditiesData;
+      default:
+        return [];
+    }
+  }, [category, cryptoAssets]);
+
+  // Get price for an asset (use live price if available)
   const getAssetPrice = useCallback((asset: Asset): number => {
+    if (asset.category === 'crypto') {
+      // Crypto prices come from the coins data directly
+      return asset.price;
+    }
     return livePrices[asset.id] ?? asset.price;
   }, [livePrices]);
 
-  // Filter assets by category, trend, and search
+  // Filter assets by trend and search
   const filteredAssets = useMemo(() => {
-    return assetsData
-      .filter((asset) => asset.category === category)
+    return allAssets
       .filter((asset) => trendFilter === 'ALL' || asset.trend === trendFilter)
       .filter((asset) =>
         searchQuery === '' ||
         asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      .sort((a, b) => a.rank - b.rank);
-  }, [category, trendFilter, searchQuery]);
+      );
+  }, [allAssets, trendFilter, searchQuery]);
 
   // Calculate stats for current category
   const stats = useMemo(() => {
-    const categoryAssets = assetsData.filter((a) => a.category === category);
-    const bullish = categoryAssets.filter((a) => a.trend === 'BULLISH').length;
-    const bearish = categoryAssets.filter((a) => a.trend === 'BEARISH').length;
-    const total = categoryAssets.length;
+    const bullish = allAssets.filter((a) => a.trend === 'BULLISH').length;
+    const bearish = allAssets.filter((a) => a.trend === 'BEARISH').length;
+    const total = allAssets.length;
 
     // Calculate total market cap for crypto
     const totalMarketCap = category === 'crypto'
-      ? categoryAssets.reduce((sum, a) => sum + (a.marketCap || 0), 0)
+      ? allAssets.reduce((sum, a) => sum + (a.marketCap || 0), 0)
       : undefined;
 
     return { total, bullish, bearish, totalMarketCap };
-  }, [category]);
+  }, [category, allAssets]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -295,9 +339,9 @@ export default function Assets() {
           <div className="flex items-center gap-3">
             {/* Loading indicator */}
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+              <div className={`w-2 h-2 rounded-full ${isLoading || cryptoLoading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
               <span className="text-sm text-slate-400">
-                {isLoading ? 'Updating...' : 'Live'}
+                {isLoading || cryptoLoading ? 'Updating...' : 'Live'}
               </span>
             </div>
             {/* Last updated */}
@@ -311,12 +355,12 @@ export default function Assets() {
 
         {/* Category Tabs */}
         <div className="mb-6">
-          <CategoryTabs active={category} onChange={setCategory} />
+          <CategoryTabs active={category} onChange={setCategory} cryptoCount={cryptoCoins.length} />
         </div>
 
         {/* Stats Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {stats.totalMarketCap && (
+          {stats.totalMarketCap !== undefined && stats.totalMarketCap > 0 && (
             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
               <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Total Market Cap</div>
               <div className="text-xl font-bold text-white">{formatMarketCap(stats.totalMarketCap)}</div>
@@ -329,13 +373,13 @@ export default function Assets() {
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Bullish</div>
             <div className="text-xl font-bold text-emerald-400">
-              <span className="text-slate-500 text-sm">({Math.round(stats.bullish / stats.total * 100)}%)</span> {stats.bullish}
+              <span className="text-slate-500 text-sm">({stats.total > 0 ? Math.round(stats.bullish / stats.total * 100) : 0}%)</span> {stats.bullish}
             </div>
           </div>
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Bearish</div>
             <div className="text-xl font-bold text-red-400">
-              <span className="text-slate-500 text-sm">({Math.round(stats.bearish / stats.total * 100)}%)</span> {stats.bearish}
+              <span className="text-slate-500 text-sm">({stats.total > 0 ? Math.round(stats.bearish / stats.total * 100) : 0}%)</span> {stats.bearish}
             </div>
           </div>
         </div>
@@ -354,62 +398,76 @@ export default function Assets() {
               />
             </div>
 
+            {/* Loading state for crypto */}
+            {category === 'crypto' && cryptoLoading && (
+              <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-12 text-center">
+                <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-slate-400">Loading top 500 cryptocurrencies...</p>
+              </div>
+            )}
+
             {/* Table */}
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px]">
-                  <thead>
-                    <tr className="border-b border-slate-700">
-                      <th className="text-left py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">#</th>
-                      <th className="text-left py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">
-                        {category === 'crypto' ? 'Token' : category === 'stocks' ? 'Stock' : 'Commodity'}
-                      </th>
-                      <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Trend</th>
-                      <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden sm:table-cell">Time Flipped</th>
-                      <th className="text-right py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Price</th>
-                      {category === 'crypto' && (
-                        <th className="text-right py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden md:table-cell">Market Cap</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredAssets.map((asset, index) => (
-                      <tr
-                        key={asset.id}
-                        onClick={() => navigate(`/asset/${asset.category}/${asset.id}`)}
-                        className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${index % 2 === 0 ? 'bg-slate-800/20' : ''
-                          }`}
-                      >
-                        <td className="py-3 px-3 sm:px-4 text-slate-500 text-sm">{asset.rank}</td>
-                        <td className="py-3 px-3 sm:px-4">
-                          <div className="flex items-center gap-2 sm:gap-3">
-                            <span className="text-xl sm:text-2xl">{asset.icon}</span>
-                            <div>
-                              <div className="font-medium text-white text-sm sm:text-base">{asset.name}</div>
-                              <div className="text-slate-500 text-xs sm:text-sm">{asset.symbol}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 sm:px-4 text-center">
-                          <TrendBadge trend={asset.trend} />
-                        </td>
-                        <td className="py-3 px-3 sm:px-4 text-center text-slate-300 text-sm hidden sm:table-cell">{asset.timeSinceFlipped}</td>
-                        <td className="py-3 px-3 sm:px-4 text-right font-mono text-white text-sm">{formatPrice(getAssetPrice(asset))}</td>
+            {!(category === 'crypto' && cryptoLoading) && (
+              <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
+                    <thead>
+                      <tr className="border-b border-slate-700">
+                        <th className="text-left py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">#</th>
+                        <th className="text-left py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">
+                          {category === 'crypto' ? 'Token' : category === 'stocks' ? 'Stock' : 'Commodity'}
+                        </th>
+                        <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Trend</th>
+                        <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden sm:table-cell">24h Change</th>
+                        <th className="text-right py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Price</th>
                         {category === 'crypto' && (
-                          <td className="py-3 px-3 sm:px-4 text-right text-slate-300 text-sm hidden md:table-cell">{formatMarketCap(asset.marketCap)}</td>
+                          <th className="text-right py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden md:table-cell">Market Cap</th>
                         )}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {filteredAssets.length === 0 && (
-                <div className="text-center py-12 text-slate-500">
-                  No assets found matching your criteria
+                    </thead>
+                    <tbody>
+                      {filteredAssets.map((asset, index) => (
+                        <tr
+                          key={asset.id}
+                          onClick={() => navigate(`/asset/${asset.category}/${asset.id}`)}
+                          className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${index % 2 === 0 ? 'bg-slate-800/20' : ''
+                            }`}
+                        >
+                          <td className="py-3 px-3 sm:px-4 text-slate-500 text-sm">{asset.rank}</td>
+                          <td className="py-3 px-3 sm:px-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <span className="text-xl sm:text-2xl">{asset.icon}</span>
+                              <div>
+                                <div className="font-medium text-white text-sm sm:text-base">{asset.name}</div>
+                                <div className="text-slate-500 text-xs sm:text-sm">{asset.symbol}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-center">
+                            <TrendBadge trend={asset.trend} />
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-center hidden sm:table-cell">
+                            <span className={`text-sm ${asset.percentFromMA >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {asset.percentFromMA >= 0 ? '+' : ''}{asset.percentFromMA.toFixed(2)}%
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-right font-mono text-white text-sm">{formatPrice(getAssetPrice(asset))}</td>
+                          {category === 'crypto' && (
+                            <td className="py-3 px-3 sm:px-4 text-right text-slate-300 text-sm hidden md:table-cell">{formatMarketCap(asset.marketCap)}</td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </div>
+
+                {filteredAssets.length === 0 && (
+                  <div className="text-center py-12 text-slate-500">
+                    No assets found matching your criteria
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Filter Panel */}
@@ -429,7 +487,7 @@ export default function Assets() {
                 and <span className="text-red-400 font-bold">BEARISH</span> when below.
               </p>
               <p className="text-slate-500 text-xs">
-                Time Since Flipped shows how long since the last trend change.
+                Click any asset to view detailed price chart with trend flip history.
               </p>
             </div>
           </div>
