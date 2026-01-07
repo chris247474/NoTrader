@@ -453,6 +453,7 @@ export default function Assets() {
                           {category === 'crypto' ? 'Token' : category === 'stocks' ? 'Stock' : 'Commodity'}
                         </th>
                         <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Trend</th>
+                        <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden sm:table-cell">Since Flip</th>
                         <th className="text-center py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium hidden sm:table-cell">24h Change</th>
                         <th className="text-right py-3 px-3 sm:px-4 text-slate-400 text-xs sm:text-sm font-medium">Price</th>
                         {category === 'crypto' && (
@@ -480,6 +481,9 @@ export default function Assets() {
                           </td>
                           <td className="py-3 px-3 sm:px-4 text-center">
                             <TrendBadge trend={asset.trend} />
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-center hidden sm:table-cell">
+                            <span className="text-slate-400 text-sm">{asset.timeSinceFlipped}</span>
                           </td>
                           <td className="py-3 px-3 sm:px-4 text-center hidden sm:table-cell">
                             <span className={`text-sm ${asset.percentFromMA >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
