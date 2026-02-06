@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import BTCCrashModel from './pages/BTCCrashModel';
 import Dashboard from './pages/Dashboard';
 import Backtest from './pages/Backtest';
 import Assets from './pages/Assets';
@@ -30,6 +31,9 @@ function App() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-4">
             <NavLink to="/" end className={navLinkClass}>
+              BTC Cycle
+            </NavLink>
+            <NavLink to="/assets" className={navLinkClass}>
               Assets
             </NavLink>
             <NavLink to="/trend-analysis" className={navLinkClass}>
@@ -62,6 +66,9 @@ function App() {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 space-y-2">
             <NavLink to="/" end className={mobileNavLinkClass} onClick={() => setMobileMenuOpen(false)}>
+              BTC Cycle
+            </NavLink>
+            <NavLink to="/assets" className={mobileNavLinkClass} onClick={() => setMobileMenuOpen(false)}>
               Assets
             </NavLink>
             <NavLink to="/trend-analysis" className={mobileNavLinkClass} onClick={() => setMobileMenuOpen(false)}>
@@ -74,7 +81,8 @@ function App() {
         )}
       </nav>
       <Routes>
-        <Route path="/" element={<Assets />} />
+        <Route path="/" element={<BTCCrashModel />} />
+        <Route path="/assets" element={<Assets />} />
         <Route path="/asset/:category/:assetId" element={<AssetDetail />} />
         <Route path="/trend-analysis" element={<Dashboard />} />
         <Route path="/backtest" element={<Backtest />} />
