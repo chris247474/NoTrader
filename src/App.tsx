@@ -42,6 +42,12 @@ function App() {
             <NavLink to="/backtest" className={navLinkClass}>
               Backtest
             </NavLink>
+            <a
+              href="/airdrop_farming_guide.html"
+              className="px-4 py-2 rounded font-medium transition-colors text-slate-300 hover:bg-slate-800"
+            >
+              Airdrop Guide
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -77,6 +83,12 @@ function App() {
             <NavLink to="/backtest" className={mobileNavLinkClass} onClick={() => setMobileMenuOpen(false)}>
               Backtest
             </NavLink>
+            <a
+              href="/airdrop_farming_guide.html"
+              className="block px-4 py-3 rounded font-medium transition-colors text-slate-300 hover:bg-slate-800"
+            >
+              Airdrop Guide
+            </a>
           </div>
         )}
       </nav>
