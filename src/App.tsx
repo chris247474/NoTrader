@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Backtest from './pages/Backtest';
 import Assets from './pages/Assets';
 import AssetDetail from './pages/AssetDetail';
+import AirdropGuide from './pages/AirdropGuide';
 
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -42,12 +43,9 @@ function App() {
             <NavLink to="/backtest" className={navLinkClass}>
               Backtest
             </NavLink>
-            <a
-              href="/airdrop_farming_guide.html"
-              className="px-4 py-2 rounded font-medium transition-colors text-slate-300 hover:bg-slate-800"
-            >
+            <NavLink to="/airdrop-farming-guide" className={navLinkClass}>
               Airdrop Guide
-            </a>
+            </NavLink>
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,12 +81,9 @@ function App() {
             <NavLink to="/backtest" className={mobileNavLinkClass} onClick={() => setMobileMenuOpen(false)}>
               Backtest
             </NavLink>
-            <a
-              href="/airdrop_farming_guide.html"
-              className="block px-4 py-3 rounded font-medium transition-colors text-slate-300 hover:bg-slate-800"
-            >
+            <NavLink to="/airdrop-farming-guide" className={mobileNavLinkClass} onClick={() => setMobileMenuOpen(false)}>
               Airdrop Guide
-            </a>
+            </NavLink>
           </div>
         )}
       </nav>
@@ -98,6 +93,7 @@ function App() {
         <Route path="/asset/:category/:assetId" element={<AssetDetail />} />
         <Route path="/trend-analysis" element={<Dashboard />} />
         <Route path="/backtest" element={<Backtest />} />
+        <Route path="/airdrop-farming-guide" element={<AirdropGuide />} />
       </Routes>
     </BrowserRouter>
   );
