@@ -1,0 +1,358 @@
+/* Scoped under .airdrop-guide-page to avoid polluting global app styles */
+
+.airdrop-guide-page {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --border: #1e1e2e;
+  --accent: #00ff88;
+  --accent2: #7b2fff;
+  --warn: #ff6b35;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --s-plus: #ffd700;
+  --s-tier: #00ff88;
+  --a-tier: #60a5fa;
+  --b-tier: #94a3b8;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.airdrop-guide-page .noise {
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; opacity: 0.4;
+}
+
+.airdrop-guide-page .ag-container {
+  position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+}
+
+/* HEADER */
+.airdrop-guide-page header {
+  padding: 4rem 0 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 3rem;
+}
+
+.airdrop-guide-page .eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.airdrop-guide-page h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  background: linear-gradient(135deg, #fff 40%, var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+}
+
+.airdrop-guide-page .subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 600px;
+}
+
+.airdrop-guide-page .meta-bar {
+  display: flex; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap;
+}
+
+.airdrop-guide-page .meta-item {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.airdrop-guide-page .meta-item span { color: var(--accent); }
+
+/* SECTIONS */
+.airdrop-guide-page .section { margin-bottom: 4rem; }
+
+.airdrop-guide-page .section-title {
+  font-size: 0.7rem;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.25em;
+  color: var(--accent2);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+
+.airdrop-guide-page .section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.airdrop-guide-page h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 1rem; }
+.airdrop-guide-page h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; }
+.airdrop-guide-page p { color: #94a3b8; margin-bottom: 0.75rem; }
+.airdrop-guide-page strong { color: var(--text); }
+
+/* ALERT / INFO BOXES */
+.airdrop-guide-page .alert {
+  background: rgba(255, 107, 53, 0.08);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-left: 3px solid var(--warn);
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  color: #fca5a5;
+}
+
+.airdrop-guide-page .info-box {
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-left: 3px solid var(--accent);
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+/* TIER GRID & CARDS */
+.airdrop-guide-page .tier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+.airdrop-guide-page .protocol-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.airdrop-guide-page .protocol-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.airdrop-guide-page .card-s-plus::before { background: linear-gradient(90deg, var(--s-plus), transparent); }
+.airdrop-guide-page .card-s::before     { background: linear-gradient(90deg, var(--s-tier), transparent); }
+.airdrop-guide-page .card-a::before     { background: linear-gradient(90deg, var(--a-tier), transparent); }
+.airdrop-guide-page .card-b::before     { background: linear-gradient(90deg, var(--b-tier), transparent); }
+
+.airdrop-guide-page .protocol-card:hover { border-color: #2e2e4e; transform: translateY(-2px); }
+
+.airdrop-guide-page .card-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.airdrop-guide-page .protocol-name { font-size: 1.1rem; font-weight: 800; }
+
+.airdrop-guide-page .tier-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+.airdrop-guide-page .tier-s-plus { background: rgba(255, 215, 0, 0.15); color: var(--s-plus); border: 1px solid rgba(255,215,0,0.3); }
+.airdrop-guide-page .tier-s      { background: rgba(0, 255, 136, 0.1);  color: var(--s-tier); border: 1px solid rgba(0,255,136,0.3); }
+.airdrop-guide-page .tier-a      { background: rgba(96, 165, 250, 0.1); color: var(--a-tier); border: 1px solid rgba(96,165,250,0.3); }
+.airdrop-guide-page .tier-b      { background: rgba(148, 163, 184, 0.1);color: var(--b-tier); border: 1px solid rgba(148,163,184,0.3); }
+
+.airdrop-guide-page .card-meta {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+
+.airdrop-guide-page .tag {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.05);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.airdrop-guide-page .tag-green  { color: var(--accent); border-color: rgba(0,255,136,0.2);  background: rgba(0,255,136,0.05); }
+.airdrop-guide-page .tag-orange { color: var(--warn);   border-color: rgba(255,107,53,0.2); background: rgba(255,107,53,0.05); }
+
+.airdrop-guide-page .card-actions { margin-top: 1rem; }
+
+.airdrop-guide-page .action-list {
+  list-style: none;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.airdrop-guide-page .action-list li {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex; align-items: flex-start; gap: 0.5rem;
+}
+
+.airdrop-guide-page .action-list li::before {
+  content: '→';
+  color: var(--accent);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.airdrop-guide-page .action-list li:last-child { border-bottom: none; }
+
+.airdrop-guide-page .alpha-box {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(123, 47, 255, 0.08);
+  border: 1px solid rgba(123, 47, 255, 0.2);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #c4b5fd;
+}
+
+.airdrop-guide-page .alpha-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent2);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.3rem;
+}
+
+.airdrop-guide-page .protocol-link {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 3px;
+  background: rgba(0,255,136,0.04);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.airdrop-guide-page .protocol-link:hover {
+  background: rgba(0,255,136,0.1);
+  border-color: rgba(0,255,136,0.4);
+}
+
+.airdrop-guide-page .protocol-link::after { content: '↗'; }
+
+/* STRATEGY TABLE */
+.airdrop-guide-page .strategy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.airdrop-guide-page .strategy-table th {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.airdrop-guide-page .strategy-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: #94a3b8;
+}
+
+.airdrop-guide-page .strategy-table td strong { color: var(--text); }
+.airdrop-guide-page .strategy-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* WEEKLY SCHEDULE */
+.airdrop-guide-page .schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.airdrop-guide-page .day-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 0.75rem;
+  text-align: center;
+}
+
+.airdrop-guide-page .day-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.airdrop-guide-page .day-tasks {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* CAPITAL ALLOCATION */
+.airdrop-guide-page .alloc-bars { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
+.airdrop-guide-page .alloc-row  { display: flex; align-items: center; gap: 1rem; }
+.airdrop-guide-page .alloc-label { font-size: 0.85rem; min-width: 160px; color: var(--text); }
+.airdrop-guide-page .alloc-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; }
+.airdrop-guide-page .alloc-bar { height: 100%; border-radius: 3px; }
+.airdrop-guide-page .alloc-pct { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--muted); min-width: 40px; text-align: right; }
+
+/* RISK GRID */
+.airdrop-guide-page .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+
+.airdrop-guide-page .risk-card {
+  padding: 1.25rem;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.airdrop-guide-page .risk-low  { border-color: rgba(0,255,136,0.2);  background: rgba(0,255,136,0.04); }
+.airdrop-guide-page .risk-med  { border-color: rgba(255,215,0,0.2);  background: rgba(255,215,0,0.04); }
+.airdrop-guide-page .risk-high { border-color: rgba(255,107,53,0.2); background: rgba(255,107,53,0.04); }
+
+.airdrop-guide-page .risk-title { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+.airdrop-guide-page .risk-low  .risk-title { color: var(--accent); }
+.airdrop-guide-page .risk-med  .risk-title { color: var(--s-plus); }
+.airdrop-guide-page .risk-high .risk-title { color: var(--warn); }
+.airdrop-guide-page .risk-text { font-size: 0.8rem; color: var(--muted); }
+
+/* FOOTER */
+.airdrop-guide-page footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem 0;
+  margin-top: 4rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .airdrop-guide-page .schedule-grid { grid-template-columns: repeat(3, 1fr); }
+  .airdrop-guide-page .risk-grid     { grid-template-columns: 1fr; }
+  .airdrop-guide-page .tier-grid     { grid-template-columns: 1fr; }
+}
